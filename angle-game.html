@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANGLE - Günlük Açı Tahmin Oyunu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #ff6b35;
+            --primary-dark: #e55a2b;
+            --primary-light: #ff8456;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border-color: #334155;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 0.5rem;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .logo-icon {
+            width: 35px;
+            height: 35px;
+            background: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            letter-spacing: 0.1em;
+        }
+
+        .nav-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .icon-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            transform: scale(1.1);
+        }
+
+        .game-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border: 2px solid var(--border-color);
+        }
+
+        .canvas-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0.5rem 0;
+            min-height: 200px;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .input-section {
+            margin: 1rem 0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        input[type="number"] {
+            flex: 1;
+            padding: 0.75rem;
+            font-size: 1rem;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .attempts {
+            text-align: center;
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.3s;
+        }
+
+        .feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feedback.very-close {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid var(--success);
+            color: var(--success);
+        }
+
+        .feedback.close {
+            background: rgba(34, 197, 94, 0.2);
+            border: 2px solid #22c55e;
+            color: #22c55e;
+        }
+
+        .feedback.medium {
+            background: rgba(245, 158, 11, 0.2);
+            border: 2px solid var(--warning);
+            color: var(--warning);
+        }
+
+        .feedback.far {
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .feedback.very-far {
+            background: rgba(220, 38, 38, 0.2);
+            border: 2px solid #dc2626;
+            color: #dc2626;
+        }
+
+        .feedback.success {
+            background: rgba(16, 185, 129, 0.3);
+            border: 2px solid var(--success);
+            color: var(--success);
+            font-size: 1.2rem;
+        }
+
+        .previous-guesses {
+            margin-top: 1rem;
+        }
+
+        .previous-guesses h3 {
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .guesses-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .guess-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .guess-number {
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .guess-feedback {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.5rem;
+            max-width: 450px;
+            width: 100%;
+            max-height: 85vh;
+            overflow-y: auto;
+            border: 2px solid var(--border-color);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.8rem;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: var(--bg-color);
+            color: var(--text-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .stat-item {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.3rem;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .theme-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .theme-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            background: var(--bg-color);
+            color: var(--text-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .theme-btn:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .theme-btn.active {
+            border-color: var(--primary-color);
+            background: rgba(255, 107, 53, 0.1);
+        }
+
+        .theme-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .custom-color-picker {
+            margin-top: 0.75rem;
+            padding: 0.75rem;
+            background: var(--bg-color);
+            border-radius: 10px;
+        }
+
+        .custom-color-picker label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 45px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .info-section {
+            margin-bottom: 1rem;
+        }
+
+        .info-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.4rem;
+            font-size: 1.1rem;
+        }
+
+        .info-section p {
+            color: var(--text-secondary);
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .timer {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .result-screen {
+            text-align: center;
+            padding: 1rem 0;
+        }
+
+        .result-screen h2 {
+            font-size: 1.6rem;
+            margin-bottom: 0.75rem;
+            color: var(--primary-color);
+        }
+
+        .result-angle {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin: 0.75rem 0;
+        }
+
+        .result-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (max-width: 600px) {
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+
+            .canvas-container {
+                min-height: 180px;
+            }
+        }
+
+        input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+        }
+
+        input[type="password"]:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <div class="logo-icon">∠</div>
+                <h1>ANGLE</h1>
+            </div>
+            <div class="nav-buttons">
+                <button class="icon-btn" onclick="showStats()" title="İstatistikler">📊</button>
+                <button class="icon-btn" onclick="showThemes()" title="Tema">🎨</button>
+                <button class="icon-btn" onclick="showHelp()" title="Nasıl Oynanır">❓</button>
+                <button class="icon-btn" onclick="showAdmin()" title="Admin">🔐</button>
+            </div>
+        </header>
+
+        <main>
+            <div class="game-card">
+                <div class="canvas-container">
+                    <canvas id="angleCanvas" width="250" height="250"></canvas>
+                </div>
+
+                <div id="gameArea">
+                    <div class="input-section">
+                        <div class="input-group">
+                            <input type="number" id="guessInput" min="0" max="360" placeholder="0-360">
+                            <button class="btn btn-primary" onclick="makeGuess()">Tahmin</button>
+                        </div>
+                        <div class="attempts">Kalan: <span id="attemptsLeft">4</span>/4</div>
+                    </div>
+
+                    <div id="feedback" class="feedback"></div>
+
+                    <div class="previous-guesses" id="previousGuesses" style="display: none;">
+                        <h3>Tahminleriniz</h3>
+                        <div class="guesses-list" id="guessesList"></div>
+                    </div>
+                </div>
+
+                <div id="resultScreen" style="display: none;">
+                    <div class="result-screen">
+                        <h2 id="resultTitle"></h2>
+                        <div class="result-angle" id="resultAngle"></div>
+                        <p id="resultMessage"></p>
+                        <div class="result-actions">
+                            <button class="btn btn-primary" onclick="shareResult()">Paylaş 📤</button>
+                            <button class="btn btn-primary" onclick="showStats()">İstatistikler 📊</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timer" id="timer"></div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Stats Modal -->
+    <div id="statsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📊 İstatistikler</h2>
+                <button class="close-btn" onclick="closeModal('statsModal')">&times;</button>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="totalGames">0</div>
+                    <div class="stat-label">Toplam Oyun</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="winRate">0%</div>
+                    <div class="stat-label">Kazanma Oranı</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="currentStreak">0</div>
+                    <div class="stat-label">Güncel Seri</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="maxStreak">0</div>
+                    <div class="stat-label">En İyi Seri</div>
+                </div>
+            </div>
+            <div class="stat-item" style="margin-top: 0.75rem;">
+                <div class="stat-value" id="avgGuesses">0</div>
+                <div class="stat-label">Ortalama Tahmin</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Modal -->
+    <div id="themeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🎨 Tema</h2>
+                <button class="close-btn" onclick="closeModal('themeModal')">&times;</button>
+            </div>
+            <div class="theme-grid">
+                <button class="theme-btn" onclick="setTheme('orange')">
+                    <div class="theme-color" style="background: #ff6b35;"></div>
+                    <span>Turuncu</span>
+                </button>
+                <button class="theme-btn" onclick="setTheme('blue')">
+                    <div class="theme-color" style="background: #3b82f6;"></div>
+                    <span>Mavi</span>
+                </button>
+                <button class="theme-btn" onclick="setTheme('purple')">
+                    <div class="theme-color" style="background: #a855f7;"></div>
+                    <span>Mor</span>
+                </button>
+                <button class="theme-btn" onclick="setTheme('green')">
+                    <div class="theme-color" style="background: #10b981;"></div>
+                    <span>Yeşil</span>
+                </button>
+                <button class="theme-btn" onclick="setTheme('red')">
+                    <div class="theme-color" style="background: #ef4444;"></div>
+                    <span>Kırmızı</span>
+                </button>
+                <button class="theme-btn" onclick="setTheme('custom')">
+                    <div class="theme-color" style="background: linear-gradient(45deg, #ff6b35, #a855f7);"></div>
+                    <span>Özel</span>
+                </button>
+            </div>
+            <div class="custom-color-picker" id="customColorPicker" style="display: none;">
+                <label>Kendi Renginiz:</label>
+                <input type="color" id="customColor" value="#ff6b35" onchange="applyCustomColor()">
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Modal -->
+    <div id="adminModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🔐 Admin</h2>
+                <button class="close-btn" onclick="closeModal('adminModal')">&times;</button>
+            </div>
+            <div id="adminLogin">
+                <div class="info-section">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Şifre:</label>
+                    <input type="password" id="adminPassword" placeholder="Şifre">
+                    <button class="btn btn-primary" style="width: 100%;" onclick="adminLogin()">Giriş</button>
+                </div>
+            </div>
+            <div id="adminPanel" style="display: none;">
+                <div class="info-section">
+                    <h3>Mevcut Açı</h3>
+                    <p style="font-size: 1.8rem; color: var(--primary-color); font-weight: bold;" id="currentAngleDisplay">0°</p>
+                </div>
+                <div class="info-section">
+                    <label style="display: block; margin-bottom: 0.5rem; color: var(--text-secondary);">Yeni Açı (0-360):</label>
+                    <input type="number" id="newAngle" min="0" max="360" placeholder="0-360">
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="updateGlobalAngle()">Güncelle</button>
+                </div>
+                <div class="info-section">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">⚠️ Herkes için değişir!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>❓ Nasıl Oynanır</h2>
+                <button class="close-btn" onclick="closeModal('helpModal')">&times;</button>
+            </div>
+            <div class="info-section">
+                <h3>Amaç</h3>
+                <p>Gösterilen açıyı 4 tahminde bulun!</p>
+            </div>
+            <div class="info-section">
+                <h3>Nasıl Oynanır</h3>
+                <p>1. Ekrandaki açıya bakın<br>
+                2. 0-360 arası tahmin girin<br>
+                3. Geri bildirimlere göre tahmin yapın<br>
+                4. 4 tahminde doğru açıyı bulun</p>
+            </div>
+            <div class="info-section">
+                <h3>Geri Bildirimler</h3>
+                <p><strong style="color: #10b981;">🔥 Çok Yakın:</strong> 0-10° fark<br>
+                <strong style="color: #22c55e;">👍 Yakın:</strong> 11-30° fark<br>
+                <strong style="color: #f59e0b;">🤔 Orta:</strong> 31-90° fark<br>
+                <strong style="color: #ef4444;">👎 Uzak:</strong> 91-150° fark<br>
+                <strong style="color: #dc2626;">❄️ Çok Uzak:</strong> 150°+ fark</p>
+            </div>
+            <div class="info-section">
+                <h3>🧪 Test</h3>
+                <p><strong>Ctrl + T:</strong> Yeni açı</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        let gameState = {
+            dailyAngle: 0,
+            guesses: [],
+            attemptsLeft: 4,
+            gameOver: false,
+            won: false,
+            date: ''
+        };
+
+        // Stats
+        let stats = {
+            totalGames: 0,
+            totalWins: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            totalGuesses: 0,
+            lastPlayedDate: ''
+        };
+
+        // Theme colors
+        const themes = {
+            orange: { primary: '#ff6b35', dark: '#e55a2b', light: '#ff8456' },
+            blue: { primary: '#3b82f6', dark: '#2563eb', light: '#60a5fa' },
+            purple: { primary: '#a855f7', dark: '#9333ea', light: '#c084fc' },
+            green: { primary: '#10b981', dark: '#059669', light: '#34d399' },
+            red: { primary: '#ef4444', dark: '#dc2626', light: '#f87171' }
+        };
+
+        // Initialize
+        function init() {
+            loadStats();
+            loadTheme();
+            const today = getToday();
+            
+            const savedGame = localStorage.getItem('angleGame');
+            if (savedGame) {
+                const saved = JSON.parse(savedGame);
+                if (saved.date === today) {
+                    gameState = saved;
+                    if (gameState.gameOver) {
+                        showResult();
+                    } else {
+                        updateDisplay();
+                    }
+                } else {
+                    startNewGame();
+                }
+            } else {
+                startNewGame();
+            }
+
+            drawAngle();
+            updateTimer();
+            setInterval(updateTimer, 1000);
+        }
+
+        function getToday() {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        }
+
+        function getDailySeed() {
+            const today = getToday();
+            let hash = 0;
+            for (let i = 0; i < today.length; i++) {
+                hash = ((hash << 5) - hash) + today.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return Math.abs(hash);
+        }
+
+        function seededRandom(seed) {
+            const x = Math.sin(seed) * 10000;
+            return x - Math.floor(x);
+        }
+
+        function startNewGame() {
+            const globalAngleData = localStorage.getItem('globalAngle');
+            let angle;
+            
+            if (globalAngleData) {
+                const data = JSON.parse(globalAngleData);
+                angle = data.angle;
+            } else {
+                const seed = getDailySeed();
+                angle = Math.floor(seededRandom(seed) * 361);
+            }
+            
+            gameState = {
+                dailyAngle: angle,
+                guesses: [],
+                attemptsLeft: 4,
+                gameOver: false,
+                won: false,
+                date: getToday()
+            };
+            
+            saveGame();
+            updateDisplay();
+        }
+
+        function makeGuess() {
+            if (gameState.gameOver) return;
+
+            const input = document.getElementById('guessInput');
+            const guess = parseInt(input.value);
+
+            if (isNaN(guess) || guess < 0 || guess > 360) {
+                showFeedback('0-360 arası sayı girin!', 'medium');
+                return;
+            }
+
+            const difference = Math.abs(gameState.dailyAngle - guess);
+            const minDiff = Math.min(difference, 360 - difference);
+
+            gameState.guesses.push({
+                value: guess,
+                difference: minDiff
+            });
+            gameState.attemptsLeft--;
+
+            if (guess === gameState.dailyAngle) {
+                gameState.won = true;
+                gameState.gameOver = true;
+                updateStats(true, gameState.guesses.length);
+                showResult();
+            } else if (gameState.attemptsLeft === 0) {
+                gameState.gameOver = true;
+                updateStats(false, 4);
+                showResult();
+            } else {
+                const feedbackText = getFeedbackText(minDiff);
+                const feedbackClass = getFeedbackClass(minDiff);
+                showFeedback(feedbackText, feedbackClass);
+            }
+
+            input.value = '';
+            updateDisplay();
+            saveGame();
+            drawAngle();
+        }
+
+        function getFeedbackText(diff) {
+            // FARK MİKTARINI GÖSTERMİYORUZ!
+            // YÖN OKU EKLİYORUZ
+            
+            // Son tahmin ile hedef açıyı karşılaştır
+            const lastGuess = gameState.guesses[gameState.guesses.length - 1].value;
+            const target = gameState.dailyAngle;
+            
+            // Hangi yöne gitmesi gerektiğini hesapla
+            let direction = '';
+            if (lastGuess !== target) {
+                // En kısa rotayı bul
+                const diff1 = target - lastGuess;
+                const diff2 = diff1 > 0 ? diff1 - 360 : diff1 + 360;
+                const shortestDiff = Math.abs(diff1) < Math.abs(diff2) ? diff1 : diff2;
+                
+                if (shortestDiff > 0) {
+                    direction = ' ⬆️'; // Açıyı artır
+                } else {
+                    direction = ' ⬇️'; // Açıyı azalt
+                }
+            }
+            
+            if (diff <= 10) return '🔥 Çok Yakın!' + direction;
+            if (diff <= 30) return '👍 Yakın!' + direction;
+            if (diff <= 90) return '🤔 Orta' + direction;
+            if (diff <= 150) return '👎 Uzak' + direction;
+            return '❄️ Çok Uzak' + direction;
+        }
+
+        function getFeedbackClass(diff) {
+            if (diff <= 10) return 'very-close';
+            if (diff <= 30) return 'close';
+            if (diff <= 90) return 'medium';
+            if (diff <= 150) return 'far';
+            return 'very-far';
+        }
+
+        function showFeedback(text, className) {
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = text;
+            feedback.className = `feedback ${className}`;
+            feedback.classList.add('show');
+
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateDisplay() {
+            document.getElementById('attemptsLeft').textContent = gameState.attemptsLeft;
+
+            const guessesList = document.getElementById('guessesList');
+            const previousGuesses = document.getElementById('previousGuesses');
+
+            if (gameState.guesses.length > 0) {
+                previousGuesses.style.display = 'block';
+                guessesList.innerHTML = gameState.guesses.map((g, i) => `
+                    <div class="guess-item">
+                        <span class="guess-number">${g.value}°</span>
+                        <span class="guess-feedback">${getFeedbackText(g.difference)}</span>
+                    </div>
+                `).join('');
+            } else {
+                previousGuesses.style.display = 'none';
+            }
+        }
+
+        function showResult() {
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+
+            const resultTitle = document.getElementById('resultTitle');
+            const resultAngle = document.getElementById('resultAngle');
+            const resultMessage = document.getElementById('resultMessage');
+
+            resultAngle.textContent = `${gameState.dailyAngle}°`;
+
+            if (gameState.won) {
+                resultTitle.textContent = '🎉 Tebrikler!';
+                resultMessage.textContent = `${gameState.guesses.length} tahminde buldunuz!`;
+            } else {
+                resultTitle.textContent = '😔 Oyun Bitti';
+                resultMessage.textContent = `Doğru açı: ${gameState.dailyAngle}°`;
+            }
+        }
+
+        function drawAngle() {
+            const canvas = document.getElementById('angleCanvas');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = 80;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-color').trim();
+
+            // Draw target angle - HER ZAMAN GÖSTER
+            const targetRad = (gameState.dailyAngle - 90) * Math.PI / 180;
+            const targetX = centerX + radius * Math.cos(targetRad);
+            const targetY = centerY + radius * Math.sin(targetRad);
+
+            // REFERANS KOL - Horizontal (sağa doğru, 0 derece)
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(centerX + radius, centerY);
+            ctx.strokeStyle = primaryColor;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // HEDEF KOL - Target angle
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.lineTo(targetX, targetY);
+            ctx.strokeStyle = primaryColor;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // AÇI YAYINI (Arc) - iki kol arasında
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 35, -Math.PI / 2, targetRad, targetRad > -Math.PI / 2);
+            ctx.strokeStyle = 'rgba(255, 107, 53, 0.4)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // YÖN OKU - Açının ortasında
+            const midAngle = targetRad / 2 - Math.PI / 2;
+            const arrowDist = 25;
+            const arrowX = centerX + arrowDist * Math.cos(midAngle);
+            const arrowY = centerY + arrowDist * Math.sin(midAngle);
+            
+            // Ok başı
+            const arrowSize = 6;
+            const arrowAngle = midAngle;
+            
+            ctx.beginPath();
+            ctx.moveTo(
+                arrowX + arrowSize * Math.cos(arrowAngle - 2.5),
+                arrowY + arrowSize * Math.sin(arrowAngle - 2.5)
+            );
+            ctx.lineTo(arrowX, arrowY);
+            ctx.lineTo(
+                arrowX + arrowSize * Math.cos(arrowAngle + 2.5),
+                arrowY + arrowSize * Math.sin(arrowAngle + 2.5)
+            );
+            ctx.strokeStyle = primaryColor;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Circle guide
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 45, 0, 2 * Math.PI);
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.2)';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+
+            // Center point
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 4, 0, 2 * Math.PI);
+            ctx.fillStyle = primaryColor;
+            ctx.fill();
+
+            // Draw previous guesses (faded)
+            if (!gameState.gameOver) {
+                gameState.guesses.forEach(guess => {
+                    const guessRad = (guess.value - 90) * Math.PI / 180;
+                    const guessX = centerX + (radius - 10) * Math.cos(guessRad);
+                    const guessY = centerY + (radius - 10) * Math.sin(guessRad);
+
+                    ctx.beginPath();
+                    ctx.arc(guessX, guessY, 3, 0, 2 * Math.PI);
+                    ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
+                    ctx.fill();
+                });
+            }
+        }
+
+        function updateTimer() {
+            const now = new Date();
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const diff = tomorrow - now;
+            const hours = Math.floor(diff / 3600000);
+            const minutes = Math.floor((diff % 3600000) / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+
+            document.getElementById('timer').textContent = 
+                `Yeni açı: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function saveGame() {
+            localStorage.setItem('angleGame', JSON.stringify(gameState));
+        }
+
+        function loadStats() {
+            const saved = localStorage.getItem('angleStats');
+            if (saved) {
+                stats = JSON.parse(saved);
+            }
+        }
+
+        function saveStats() {
+            localStorage.setItem('angleStats', JSON.stringify(stats));
+        }
+
+        function updateStats(won, guessCount) {
+            const today = getToday();
+
+            stats.totalGames++;
+            if (won) {
+                stats.totalWins++;
+                stats.totalGuesses += guessCount;
+                
+                if (stats.lastPlayedDate) {
+                    const lastDate = new Date(stats.lastPlayedDate);
+                    const todayDate = new Date(today);
+                    const diffDays = Math.floor((todayDate - lastDate) / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays === 1) {
+                        stats.currentStreak++;
+                    } else if (diffDays > 1) {
+                        stats.currentStreak = 1;
+                    }
+                } else {
+                    stats.currentStreak = 1;
+                }
+
+                stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+            } else {
+                stats.currentStreak = 0;
+            }
+
+            stats.lastPlayedDate = today;
+            saveStats();
+        }
+
+        function showStats() {
+            document.getElementById('totalGames').textContent = stats.totalGames;
+            document.getElementById('winRate').textContent = 
+                stats.totalGames > 0 ? Math.round((stats.totalWins / stats.totalGames) * 100) + '%' : '0%';
+            document.getElementById('currentStreak').textContent = stats.currentStreak;
+            document.getElementById('maxStreak').textContent = stats.maxStreak;
+            document.getElementById('avgGuesses').textContent = 
+                stats.totalWins > 0 ? (stats.totalGuesses / stats.totalWins).toFixed(1) : '0';
+
+            document.getElementById('statsModal').classList.add('show');
+        }
+
+        function showThemes() {
+            const currentTheme = localStorage.getItem('angleTheme') || 'orange';
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[onclick*="${currentTheme}"]`)?.classList.add('active');
+            document.getElementById('themeModal').classList.add('show');
+        }
+
+        function showHelp() {
+            document.getElementById('helpModal').classList.add('show');
+        }
+
+        function showAdmin() {
+            document.getElementById('adminLogin').style.display = 'block';
+            document.getElementById('adminPanel').style.display = 'none';
+            document.getElementById('adminPassword').value = '';
+            
+            const globalAngle = getGlobalAngle();
+            if (globalAngle !== null) {
+                document.getElementById('currentAngleDisplay').textContent = globalAngle + '°';
+            } else {
+                document.getElementById('currentAngleDisplay').textContent = gameState.dailyAngle + '°';
+            }
+            
+            document.getElementById('adminModal').classList.add('show');
+        }
+
+        function adminLogin() {
+            const password = document.getElementById('adminPassword').value;
+            if (password === 'admin123') {
+                document.getElementById('adminLogin').style.display = 'none';
+                document.getElementById('adminPanel').style.display = 'block';
+            } else {
+                alert('❌ Hatalı şifre!');
+            }
+        }
+
+        function getGlobalAngle() {
+            const globalAngle = localStorage.getItem('globalAngle');
+            if (globalAngle) {
+                const data = JSON.parse(globalAngle);
+                return data.angle;
+            }
+            return null;
+        }
+
+        function updateGlobalAngle() {
+            const newAngle = parseInt(document.getElementById('newAngle').value);
+            
+            if (isNaN(newAngle) || newAngle < 0 || newAngle > 360) {
+                alert('⚠️ 0-360 arası değer girin!');
+                return;
+            }
+
+            if (confirm(`🔄 Açı ${newAngle}° olacak. Emin misiniz?`)) {
+                localStorage.setItem('globalAngle', JSON.stringify({
+                    angle: newAngle,
+                    timestamp: Date.now()
+                }));
+
+                localStorage.removeItem('angleGame');
+                alert('✅ Güncellendi! Yenileniyor...');
+                location.reload();
+            }
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        function setTheme(themeName) {
+            if (themeName === 'custom') {
+                document.getElementById('customColorPicker').style.display = 'block';
+                return;
+            }
+
+            document.getElementById('customColorPicker').style.display = 'none';
+            
+            const theme = themes[themeName];
+            document.documentElement.style.setProperty('--primary-color', theme.primary);
+            document.documentElement.style.setProperty('--primary-dark', theme.dark);
+            document.documentElement.style.setProperty('--primary-light', theme.light);
+
+            localStorage.setItem('angleTheme', themeName);
+            
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.closest('.theme-btn').classList.add('active');
+
+            drawAngle();
+        }
+
+        function applyCustomColor() {
+            const color = document.getElementById('customColor').value;
+            document.documentElement.style.setProperty('--primary-color', color);
+            document.documentElement.style.setProperty('--primary-dark', color);
+            document.documentElement.style.setProperty('--primary-light', color);
+
+            localStorage.setItem('angleTheme', 'custom');
+            localStorage.setItem('angleCustomColor', color);
+
+            drawAngle();
+        }
+
+        function loadTheme() {
+            const savedTheme = localStorage.getItem('angleTheme');
+            if (savedTheme === 'custom') {
+                const customColor = localStorage.getItem('angleCustomColor');
+                if (customColor) {
+                    document.getElementById('customColor').value = customColor;
+                    applyCustomColor();
+                }
+            } else if (savedTheme && themes[savedTheme]) {
+                const theme = themes[savedTheme];
+                document.documentElement.style.setProperty('--primary-color', theme.primary);
+                document.documentElement.style.setProperty('--primary-dark', theme.dark);
+                document.documentElement.style.setProperty('--primary-light', theme.light);
+            }
+        }
+
+        function shareResult() {
+            const emoji = gameState.won ? '🎯' : '❌';
+            const guessBoxes = gameState.guesses.map(g => {
+                if (g.value === gameState.dailyAngle) return '🟢';
+                if (g.difference <= 10) return '🟢';
+                if (g.difference <= 30) return '🟡';
+                if (g.difference <= 90) return '🟠';
+                return '🔴';
+            }).join('');
+
+            const blanks = '⬜'.repeat(4 - gameState.guesses.length);
+            
+            const shareText = `ANGLE ${getToday()}\n${emoji} ${gameState.guesses.length}/4\n\n${guessBoxes}${blanks}`;
+
+            if (navigator.share) {
+                navigator.share({
+                    text: shareText
+                }).catch(() => {
+                    copyToClipboard(shareText);
+                });
+            } else {
+                copyToClipboard(shareText);
+            }
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Panoya kopyalandı! 📋');
+            });
+        }
+
+        document.getElementById('guessInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                makeGuess();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 't') {
+                e.preventDefault();
+                if (confirm('🧪 TEST: Yeni açı?')) {
+                    localStorage.removeItem('angleGame');
+                    location.reload();
+                }
+            }
+        });
+
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('show');
+                }
+            });
+        });
+
+        init();
+    </script>
+</body>
+</html>
